@@ -1,0 +1,144 @@
+# ==========================================
+# Autism Prediction using Machine Learning
+# Models: Random Forest & KNN
+# ==========================================
+
+# 1. Import Required Libraries
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
+# ------------------------------------------
+# 2. Load Dataset
+# ------------------------------------------
+data = pd.read_csv(r"C:\Users\Admin\Downloads\train.csv")
+
+print("First 5 rows of the dataset:")
+print(data.head())
+
+# ------------------------------------------
+# 3. Dataset Overview
+# ------------------------------------------
+print("\nDataset Shape:", data.shape)
+print("\nDataset Info:")
+print(data.info())
+print("\nStatistical Summary:")
+print(data.describe())
+
+# ------------------------------------------
+# 4. Check & Handle Missing Values
+# ------------------------------------------
+print("\nMissing Values:")
+print(data.isnull().sum())
+
+data.fillna(method='ffill', inplace=True)
+
+# ------------------------------------------
+# 5. Exploratory Data Analysis (EDA)
+# ------------------------------------------
+sns.countplot(x='Class/ASD', data=data)
+plt.title("Autism vs Non-Autism Count")
+plt.show()
+
+sns.countplot(x='gender', data=data)
+plt.title("Gender Distribution")
+plt.show()
+
+sns.countplot(x='gender', hue='Class/ASD', data=data)
+plt.title("Autism Distribution by Gender")
+plt.show()
+
+# ------------------------------------------
+# 6. Encode Categorical Columns
+# ------------------------------------------
+le = LabelEncoder()
+
+categorical_cols = [
+    'gender',
+    'ethnicity',
+    'jaundice',
+    'autism',
+    'country_of_res'
+]
+
+for col in categorical_cols:
+    data[col] = le.fit_transform(data[col])
+
+print("\nEncoded Dataset Preview:")
+print(data.head())
+
+# ------------------------------------------
+# 7. Feature & Target Split
+# ------------------------------------------
+X = data.drop('Class/ASD', axis=1)
+y = data['Class/ASD']
+
+# ------------------------------------------
+# 8. Train-Test Split
+# ------------------------------------------
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# ------------------------------------------
+# 9. Feature Scaling (IMPORTANT for KNN)
+# ------------------------------------------
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# ==========================================
+# 10. RANDOM FOREST CLASSIFIER
+# ==========================================
+rf = RandomForestClassifier(n_estimators=100, random_state=42)
+rf.fit(X_train, y_train)
+
+rf_pred = rf.predict(X_test)
+
+rf_accuracy = accuracy_score(y_test, rf_pred)
+
+print("\n--- Random Forest Results ---")
+print("Accuracy:", rf_accuracy)
+print("Confusion Matrix:\n", confusion_matrix(y_test, rf_pred))
+print("Classification Report:\n", classification_report(y_test, rf_pred))
+
+# ==========================================
+# 11. K-NEAREST NEIGHBORS (KNN)
+# ==========================================
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_train, y_train)
+
+knn_pred = knn.predict(X_test)
+
+knn_accuracy = accuracy_score(y_test, knn_pred)
+
+print("\n--- KNN Results ---")
+print("Accuracy:", knn_accuracy)
+print("Confusion Matrix:\n", confusion_matrix(y_test, knn_pred))
+print("Classification Report:\n", classification_report(y_test, knn_pred))
+
+# ------------------------------------------
+# 12. Model Comparison
+# ------------------------------------------
+print("\n--- Final Model Comparison ---")
+print("Random Forest Accuracy:", rf_accuracy)
+print("KNN Accuracy:", knn_accuracy)
+
+# ------------------------------------------
+# 13. Accuracy Comparison Graph
+# ------------------------------------------
+models = ['Random Forest', 'KNN']
+accuracies = [rf_accuracy, knn_accuracy]
+
+plt.bar(models, accuracies)
+plt.xlabel("Models")
+plt.ylabel("Accuracy")
+plt.title("Model Accuracy Comparison")
+plt.show()
